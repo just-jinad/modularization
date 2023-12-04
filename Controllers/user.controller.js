@@ -1,4 +1,15 @@
 
+const cloudinary = require("cloudinary")
+const nodemailer = require("nodemailer");
+
+
+cloudinary.config({ 
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECERT
+});
+
+
 const userModel = require("../Models/user.model")
 const bcryptjs = require("bcryptjs")
 const jwt = require("jsonwebtoken")
@@ -91,6 +102,49 @@ const dashboard = (req,res)=>{
   }))
 }
 
+const upload = (req, res) => {
+  console.log(req.body);
 
-module.exports = {userWelcome, registerUser, signUp,authenticateUser,  dashboard }
+  let uploadfiles = req.body.file;
+  cloudinary.v2.uploader.upload(uploadfiles, function (err, result) {
+    if (err) {
+      console.log(err);
+      res.status(500).send({ status: false, message: "Error uploading file" });
+    } else {
+      let myImage = result.secure_url;
+      console.log(myImage);
+      res.send({ status: true, message: "file uploaded successfully", myImage });
+    }
+  });
+};
+const html = "<div> hello  email has been Sent </div>"
+
+const sendmail = ()=>{
+
+  var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env. PASSWORD
+    }
+  });
+  
+  var mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: "isaacjinad@gmail.com",
+    subject: 'Sending Email using Node.js',
+    html:html
+  };
+  
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email sent: ' + info.response);
+    }
+  });
+}
+
+
+module.exports = {userWelcome, registerUser, signUp,authenticateUser,  dashboard,  upload, sendmail }
 
